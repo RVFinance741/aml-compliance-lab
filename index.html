@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AML Compliance Lab — Transaction Monitoring Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+/* =============================================
+   DESIGN SYSTEM
+   ============================================= */
+:root {
+  --bg:          #0b1118;
+  --surface:     #111c27;
+  --surface-2:   #182535;
+  --border:      #1e3247;
+  --border-l:    #26405c;
+
+  --text:        #dde6f0;
+  --text-muted:  #5d7a94;
+  --text-dim:    #3a5270;
+
+  --accent:      #1a7fcf;
+  --accent-h:    #2490e8;
+  --accent-glow: rgba(26, 127, 207, 0.15);
+
+  --low:         #059669;
+  --low-bg:      rgba(5, 150, 105, 0.10);
+  --med:         #d97706;
+  --med-bg:      rgba(217, 119, 6, 0.10);
+  --high:        #dc2626;
+  --high-bg:     rgba(220, 38, 38, 0.10);
+
+  --ok-bg:       rgba(5, 150, 105, 0.07);
+  --ok-border:   rgba(5, 150, 105, 0.20);
+  --err-bg:      rgba(220, 38, 38, 0.07);
+  --err-border:  rgba(220, 38, 38, 0.20);
+  --warn-bg:     rgba(217, 119, 6, 0.07);
+  --warn-border: rgba(217, 119, 6, 0.20);
+  --info-bg:     rgba(26, 127, 207, 0.07);
+  --info-border: rgba(26, 127, 207, 0.20);
+
+  --ff-display: 'Cormorant', Georgia, serif;
+  --ff-body:    'Outfit', system-ui, sans-serif;
+  --ff-mono:    'JetBrains Mono', Consolas, monospace;
+
+  --r:  8px;
+  --rl: 12px;
+}
+
+/* =============================================
+   LIGHT MODE
+   ============================================= */
+body.light-mode {
+  --bg:          #f0f4f8;
+  --surface:     #ffffff;
+  --surface-2:   #f4f7fa;
+  --border:      #d8e0e8;
+  --border-l:    #b8c8d8;
+
+  --text:        #1a2b3c;
+  --text-muted:  #4a6275;
+  --text-dim:    #8aa0b2;
+
+  --accent:      #1a7fcf;
+  --accent-h:    #1570b8;
+  --accent-glow: rgba(26, 127, 207, 0.10);
+
+  --low:         #059669;
+  --low-bg:      rgba(5, 150, 105, 0.10);
+  --med:         #b45309;
+  --med-bg:      rgba(180, 83, 9, 0.10);
+  --high:        #dc2626;
+  --high-bg:     rgba(220, 38, 38, 0.10);
+
+  --ok-bg:       rgba(5, 150, 105, 0.08);
+  --ok-border:   rgba(5, 150, 105, 0.25);
+  --err-bg:      rgba(220, 38, 38, 0.08);
+  --err-border:  rgba(220, 38, 38, 0.25);
+  --warn-bg:     rgba(180, 83, 9, 0.08);
+  --warn-border: rgba(180, 83, 9, 0.25);
+  --info-bg:     rgba(26, 127, 207, 0.08);
+  --info-border: rgba(26, 127, 207, 0.25);
+}
+
+body.light-mode .brand-title   { color: #1a2b3c; }
+body.light-mode .stat-value    { color: #1a2b3c; }
+body.light-mode .ref-section-head { color: #1a2b3c; }
+body.light-mode .fw-name       { color: #1a2b3c; }
+body.light-mode .case-main-title{ color: #1a2b3c; }
+body.light-mode .about-title   { color: #1a2b3c; }
+body.light-mode select, body.light-mode textarea { background: #ffffff; color: #1a2b3c; }
+body.light-mode .str-wrap textarea { background: #f4f7fa; color: var(--text-muted); }
+
+/* Theme toggle button */
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--border-l);
+  border-radius: var(--r);
+  color: var(--text-muted);
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  padding: 6px 12px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.theme-toggle:hover { color: var(--text); border-color: var(--accent); }
+.theme-toggle-icon  { font-size: 13px; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--ff-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* =============================================
+   HEADER & NAV
+   ============================================= */
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 15px 0;
+  flex-shrink: 0;
+}
+
+.brand-title {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: #f1f5f9;
+  letter-spacing: 0.3px;
+}
+
+.brand-sep { color: var(--text-dim); }
+
+.brand-sub {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.app-nav { display: flex; gap: 2px; }
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--ff-body);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--r);
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  transition: color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.nav-btn:hover  { color: var(--text); background: var(--surface-2); }
+.nav-btn.active { color: var(--accent); background: var(--accent-glow); }
+
+/* =============================================
+   LAYOUT
+   ============================================= */
+.app-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 24px;
+}
+
+.tab-panel         { display: none; }
+.tab-panel.active  { display: block; }
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rl);
+  padding: 22px;
+  margin-bottom: 20px;
+}
+
+.panel-label {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.two-col    { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.three-col  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* =============================================
+   STAT CARDS
+   ============================================= */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rl);
+  padding: 20px;
+}
+
+.stat-label {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.stat-value {
+  font-family: var(--ff-display);
+  font-size: 34px;
+  font-weight: 600;
+  color: #f1f5f9;
+  line-height: 1;
+}
+
+.stat-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 7px;
+}
+
+/* =============================================
+   MASTERY BARS
+   ============================================= */
+.mastery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.mastery-item    { display: flex; flex-direction: column; gap: 5px; }
+
+.mastery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mastery-name  { font-size: 12px; color: var(--text); font-weight: 500; }
+.mastery-count { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); }
+
+.bar-track {
+  height: 4px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent);
+  transition: width 0.5s ease;
+}
+
+.bar-fill.good        { background: var(--low); }
+.bar-fill.ok          { background: var(--med); }
+.bar-fill.needs-work  { background: var(--high); }
+
+/* =============================================
+   TABLES
+   ============================================= */
+table { width: 100%; border-collapse: collapse; }
+
+th {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+}
+
+td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+tr:last-child td  { border-bottom: none; }
+tbody tr:hover td { background: var(--surface-2); }
+
+/* Info table (key/value) */
+.info-table td:first-child {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  width: 38%;
+}
+
+.info-table td:last-child { font-size: 13px; }
+
+/* TX table */
+.tx-table td { font-family: var(--ff-mono); font-size: 12px; }
+.tx-table th { font-size: 10px; }
+.tx-amount   { color: var(--text); font-weight: 500; }
+
+/* =============================================
+   BADGES
+   ============================================= */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 4px;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.risk-low    { background: var(--low-bg);  color: var(--low); }
+.risk-medium { background: var(--med-bg);  color: var(--med); }
+.risk-high   { background: var(--high-bg); color: var(--high); }
+
+/* =============================================
+   BUTTONS
+   ============================================= */
+button, .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: var(--r);
+  padding: 9px 16px;
+  font-family: var(--ff-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  letter-spacing: 0.2px;
+  text-decoration: none;
+}
+
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-h); }
+
+.btn-secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border-l);
+}
+.btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--border-l); }
+
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* =============================================
+   FORM ELEMENTS
+   ============================================= */
+select, textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--ff-body);
+  font-size: 14px;
+  padding: 10px 12px;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+textarea::placeholder { color: var(--text-dim); font-style: italic; font-size: 13px; }
+
+/* =============================================
+   ALERT BANNER & REVIEW QUESTIONS
+   ============================================= */
+.alert-banner {
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.alert-type-label {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.alert-indicator { font-size: 13px; color: var(--text); line-height: 1.55; }
+
+.review-q {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+}
+
+.review-q-label {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.review-q ol { padding-left: 16px; margin: 0; }
+.review-q li { font-size: 12px; color: var(--text-muted); margin-bottom: 5px; line-height: 1.45; }
+.review-q li:last-child { margin-bottom: 0; }
+
+/* =============================================
+   SECTION DIVIDER
+   ============================================= */
+.sdiv {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 14px;
+}
+
+.sdiv-label {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.sdiv-line { flex: 1; height: 1px; background: var(--border); }
+
+/* =============================================
+   FEEDBACK
+   ============================================= */
+.fb-box {
+  border-radius: var(--r);
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid transparent;
+}
+
+.fb-box.correct  { background: var(--ok-bg);   border-color: var(--ok-border); }
+.fb-box.incorrect{ background: var(--err-bg);  border-color: var(--err-border); }
+.fb-box.warning  { background: var(--warn-bg); border-color: var(--warn-border); }
+.fb-box.info     { background: var(--info-bg); border-color: var(--info-border); }
+
+.fb-title {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.fb-box.correct   .fb-title { color: var(--low);    }
+.fb-box.incorrect .fb-title { color: var(--high);   }
+.fb-box.warning   .fb-title { color: var(--med);    }
+.fb-box.info      .fb-title { color: var(--accent); }
+
+.fb-text { font-size: 13px; line-height: 1.65; color: var(--text); }
+
+.fb-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.score-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px;
+}
+
+.score-title {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.score-box ul { padding-left: 16px; margin: 0; }
+.score-box li { font-size: 12px; color: var(--text); margin-bottom: 5px; line-height: 1.45; }
+
+/* =============================================
+   STR DRAFT
+   ============================================= */
+.str-wrap textarea {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  background: var(--bg);
+  min-height: 260px;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+
+/* =============================================
+   REFERENCE LIBRARY
+   ============================================= */
+.ref-intro {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  line-height: 1.75;
+  max-width: 820px;
+}
+
+.ref-section-head {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 4px;
+}
+
+.ref-section-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.gloss-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+/* =============================================
+   EXPANDABLE CARDS
+   ============================================= */
+.gloss-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rl);
+  padding: 18px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+  position: relative;
+}
+
+.gloss-card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-glow); }
+.gloss-card.expanded { border-color: var(--accent); }
+
+.gloss-def {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.65;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.25s ease, margin-top 0.25s ease;
+  opacity: 0;
+  margin-top: 0;
+}
+
+.gloss-card.expanded .gloss-def {
+  max-height: 300px;
+  opacity: 1;
+  margin-top: 8px;
+}
+
+.gloss-expand-hint {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-top: 6px;
+  transition: color 0.15s;
+}
+.gloss-card:hover .gloss-expand-hint { color: var(--accent); }
+.gloss-card.expanded .gloss-expand-hint { display: none; }
+
+/* Typology & Framework expandable cards */
+.typol-card, .fw-card {
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.typol-card:hover, .fw-card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-glow); }
+.typol-card.expanded, .fw-card.expanded { border-color: var(--accent); }
+
+.typol-desc, .typol-flags, .fw-desc {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.35s ease, opacity 0.25s ease, margin-top 0.25s ease;
+  margin-top: 0;
+}
+.typol-card.expanded .typol-desc,
+.typol-card.expanded .typol-flags,
+.fw-card.expanded .fw-desc {
+  max-height: 400px;
+  opacity: 1;
+  margin-top: 8px;
+}
+
+.card-expand-hint {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-top: 8px;
+  transition: color 0.15s;
+}
+.typol-card:hover .card-expand-hint,
+.fw-card:hover .card-expand-hint { color: var(--accent); }
+.typol-card.expanded .card-expand-hint,
+.fw-card.expanded .card-expand-hint { display: none; }
+
+/* About skill items expandable */
+.skill-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.skill-item:hover { border-color: var(--accent); }
+.skill-item.expanded { border-color: var(--accent); background: var(--accent-glow); }
+
+.skill-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 0;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.25s ease, margin-top 0.2s ease;
+}
+.skill-item.expanded .skill-desc {
+  max-height: 150px;
+  opacity: 1;
+  margin-top: 5px;
+}
+
+.typol-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.typol-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rl);
+  padding: 18px;
+}
+
+.typol-name {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  margin-bottom: 3px;
+}
+
+.typol-risk { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+
+.typol-desc {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.65;
+  margin-bottom: 10px;
+}
+
+.typol-flags { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+.typol-flags strong { color: var(--text-dim); }
+
+.fw-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.fw-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rl);
+  padding: 22px;
+}
+
+.fw-name {
+  font-family: var(--ff-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 3px;
+}
+
+.fw-full {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+/* =============================================
+   ABOUT
+   ============================================= */
+.about-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.about-main {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rl);
+  padding: 28px;
+}
+
+.about-title {
+  font-family: var(--ff-display);
+  font-size: 30px;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 4px;
+}
+
+.about-version {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 22px;
+}
+
+.about-p {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+
+.skills-label {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  margin-top: 24px;
+}
+
+.skill-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 8px;
+}
+
+.skill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: 7px;
+  flex-shrink: 0;
+}
+
+.skill-name { font-size: 13px; color: var(--text); font-weight: 500; line-height: 1.4; }
+
+.about-sidebar { display: flex; flex-direction: column; gap: 14px; }
+
+.aside-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rl);
+  padding: 18px;
+}
+
+.aside-title {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.tech-item {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--text);
+  padding: 6px 10px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  margin-bottom: 5px;
+}
+
+.disclaimer { font-size: 11px; color: var(--text-dim); line-height: 1.7; }
+
+/* =============================================
+   UTILITIES
+   ============================================= */
+hr.div {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 32px 0;
+}
+
+.case-meta-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.case-main-title {
+  font-family: var(--ff-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 4px;
+}
+
+.case-id-line {
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.field-label {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+/* =============================================
+   FOOTER
+   ============================================= */
+.app-footer {
+  border-top: 1px solid var(--border);
+  padding: 16px 28px;
+  text-align: center;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+@media (max-width: 980px) {
+  .stats-grid    { grid-template-columns: repeat(2, 1fr); }
+  .two-col       { grid-template-columns: 1fr; }
+  .fb-grid       { grid-template-columns: 1fr; }
+  .gloss-grid    { grid-template-columns: repeat(2, 1fr); }
+  .typol-grid    { grid-template-columns: 1fr; }
+  .fw-grid       { grid-template-columns: 1fr; }
+  .about-layout  { grid-template-columns: 1fr; }
+  .mastery-grid  { grid-template-columns: 1fr; }
+  .three-col     { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+  .app-header    { flex-direction: column; align-items: flex-start; gap: 0; padding: 0 16px; }
+  .app-nav       { padding: 10px 0; overflow-x: auto; width: 100%; }
+  .app-main      { padding: 16px; }
+  .gloss-grid    { grid-template-columns: 1fr; }
+  .stats-grid    { grid-template-columns: 1fr 1fr; }
+  .brand-sub     { display: none; }
+  .three-col     { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- =============================================
+     HEADER
+     ============================================= -->
+<header class="app-header">
+  <div class="brand">
+    <span class="brand-title">AML Compliance Lab</span>
+    <span class="brand-sep">|</span>
+    <span class="brand-sub">Transaction Monitoring Simulator</span>
+  </div>
+  <nav class="app-nav">
+    <button class="nav-btn active"  onclick="showTab('dashboard')">Dashboard</button>
+    <button class="nav-btn"         onclick="showTab('investigations')">Investigations</button>
+    <button class="nav-btn"         onclick="showTab('reference')">Reference Library</button>
+    <button class="nav-btn"         onclick="showTab('about')">About</button>
+  </nav>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+    <span class="theme-toggle-icon" id="themeIcon">☀</span>
+    <span id="themeLabel">Light</span>
+  </button>
+</header>
+
+<main class="app-main">
+
+<!-- =============================================
+     DASHBOARD TAB
+     ============================================= -->
+<section class="tab-panel active" id="tab-dashboard">
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Cases Reviewed</div>
+      <div class="stat-value" id="casesReviewed">0</div>
+      <div class="stat-sub">Total dispositions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Correct Calls</div>
+      <div class="stat-value" id="correctCases" style="color:var(--low)">0</div>
+      <div class="stat-sub">Properly escalated or reported</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Incorrect Calls</div>
+      <div class="stat-value" id="incorrectCases" style="color:var(--high)">0</div>
+      <div class="stat-sub">Missed or under-supported</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Accuracy</div>
+      <div class="stat-value" id="accuracy" style="color:var(--accent)">—</div>
+      <div class="stat-sub">Decision accuracy rate</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">Mastery by Alert Type</div>
+    <div class="mastery-grid" id="masteryGrid">
+      <span style="font-size:13px; color:var(--text-dim)">Complete cases to build your mastery profile.</span>
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
+    <span style="font-family:var(--ff-mono); font-size:10px; color:var(--text-dim)">
+      Performance data is stored locally in your browser and persists between sessions.
+    </span>
+    <button class="btn btn-ghost btn-sm" onclick="resetStats()">Reset Data</button>
+  </div>
+
+</section>
+
+<!-- =============================================
+     INVESTIGATIONS TAB
+     ============================================= -->
+<section class="tab-panel" id="tab-investigations">
+
+  <div class="panel">
+    <div class="panel-label">Alert Queue</div>
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="refreshQueue()">Generate New Queue</button>
+      <button class="btn btn-ghost btn-sm" onclick="showTab('reference')">Reference Library</button>
+    </div>
+    <table id="alertTable">
+      <tr>
+        <th>Alert ID</th>
+        <th>Alert Type</th>
+        <th>Subject</th>
+        <th>Risk Score</th>
+        <th>Risk Level</th>
+        <th></th>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Case Investigation Panel -->
+  <div id="casePanel" style="display:none">
+    <div class="panel">
+
+      <div class="case-meta-bar">
+        <div>
+          <div class="case-main-title">Case Investigation</div>
+          <div class="case-id-line" id="caseIdLine">—</div>
+        </div>
+        <div id="riskBadgeWrap"></div>
+      </div>
+
+      <div id="caseData"></div>
+
+      <div class="sdiv">
+        <span class="sdiv-label">Analyst Disposition</span>
+        <span class="sdiv-line"></span>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div class="field-label">Decision</div>
+        <select id="decision">
+          <option value="">Select disposition</option>
+          <option value="close">Close — No Suspicious Activity Identified</option>
+          <option value="escalate">Escalate for Enhanced Due Diligence</option>
+          <option value="report">File Suspicious Transaction Report</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div class="field-label">Investigation Notes</div>
+        <textarea id="notes" placeholder="Document your rationale using AML reasoning. Consider: the specific transaction pattern and what makes it anomalous, how the activity compares to the customer's declared profile and expected behavior, any jurisdictional or counterparty risk factors, and the regulatory basis for your disposition."></textarea>
+      </div>
+
+      <div class="toolbar">
+        <button id="submitBtn" class="btn btn-primary" onclick="submitCase()">Submit Disposition</button>
+        <button class="btn btn-ghost btn-sm" onclick="showHint()">Show Investigative Prompt</button>
+        <button id="exportBtn" class="btn btn-secondary btn-sm" onclick="exportReport()" style="display:none">Export STR Draft</button>
+      </div>
+
+      <div id="feedback"></div>
+      <div id="strDraftWrap"></div>
+
+    </div>
+  </div>
+
+</section>
+
+<!-- =============================================
+     REFERENCE LIBRARY TAB
+     ============================================= -->
+<section class="tab-panel" id="tab-reference">
+
+  <p class="ref-intro">
+    A working reference for anti-money laundering practice. Covers core terminology, the ten typology patterns used in this simulator, and the primary regulatory frameworks governing suspicious activity reporting. Use this alongside the investigation queue to build contextual understanding alongside case-by-case judgment.
+  </p>
+
+  <!-- GLOSSARY -->
+  <div class="ref-section-head">Core Terminology</div>
+  <div class="ref-section-sub">Key definitions used across financial intelligence and transaction monitoring practice.</div>
+
+  <div class="gloss-grid">
+    <div class="gloss-card" onclick="toggleCard(this)">
+      <div class="gloss-term">AML</div>
+      <div class="gloss-abbr">Anti-Money Laundering</div>
+      <div class="gloss-expand-hint">Click to expand</div>
+      <div class="gloss-def">The body of laws, regulations, and internal controls designed to prevent criminals from disguising illegally obtained funds as legitimate income. AML programs typically comprise customer due diligence, transaction monitoring, and suspicious activity reporting obligations.</div>
+    </div>
+    <div class="gloss-card" onclick="toggleCard(this)">
+      <div class="gloss-term">STR / SAR</div>
+      <div class="gloss-abbr">Suspicious Transaction Report / Suspicious Activity Report</div>
+      <div class="gloss-expand-hint">Click to expand</div>
+      <div class="gloss-def">A mandatory regulatory filing submitted by financial institutions when activity raises reasonable grounds to suspect money laundering, terrorist financing, or related criminal activity. Filing thresholds and timelines vary by jurisdiction. In Canada, FINTRAC governs STR obligations; in the US, FinCEN governs SAR requirements.</div>
+    </div>
+    <div class="gloss-card" onclick="toggleCard(this)">
+      <div class="gloss-term">KYC / CDD</div>
+      <div class="gloss-abbr">Know Your Customer / Customer Due Diligence</div>
+      <div class="gloss-expand-hint">Click to expand</div>
+      <div class="gloss-def">The process of verifying a customer's identity, understanding their business activities, and establishing expected transaction behavior. CDD forms the baseline of a risk-based AML framework. Without an accurate customer profile, meaningful anomaly detection is not possible.</div>
+    </div>
+    <div class="gloss-card" onclick="toggleCard(this)">
+      <div class="gloss-term">EDD</div>
+      <div class="gloss-abbr">Enhanced Due Diligence</div>
+      <div class="gloss-expand-hint">Click to expand</div>
+      <div class="gloss-def">Additional scrutiny applied to higher-risk customers, relationships, or transactions. Typically triggered by PEP status, high-risk jurisdictions, adverse media, or unresolved transactional anomalies. Requires deeper inquiry into source of funds and source of wealth than standard CDD.</div>
+    </div>
+    <div class="gloss-card" onclick="toggleCard(this)">
+      <div class="gloss-term">PEP</div>
+      <div class="gloss-abbr">Politically Exposed Person</div>
+      <div class="gloss-expand-hint">Click to expand</div>
+      <div class="gloss-def">An individual who holds or has held a prominent public function, or who is closely associated with such a person. PEPs carry elevated inherent risk of bribery and corruption exposure and require enhanced due diligence and ongoing monitoring regardless of transaction volume or product type.</div>
+    </div>
+    <div class="gloss-card" onclick="toggleCard(this)">
+      <div class="gloss-term">FATF</div>
+      <div class="gloss-abbr">Financial Action Task Force</div>
+      <div class="gloss-expand-hint">Click to expand</div>
+      <div class="gloss-def">The intergovernmental standard-setter for AML and counter-terrorist financing globally. Publishes the 40 Recommendations, maintains jurisdiction-level risk classifications (grey list / black list), and conducts mutual evaluations of member countries. Jurisdiction-level risk ratings directly affect transaction risk scoring for cross-border wires.</div>
+    </div>
+    <div class="gloss-card" onclick="toggleCard(this)">
+      <div class="gloss-term">Typology</div>
+      <div class="gloss-abbr">Money Laundering Pattern</div>
+      <div class="gloss-expand-hint">Click to expand</div>
+      <div class="gloss-def">A documented method or behavioral pattern used to launder money or finance terrorism. Transaction monitoring systems are built around known typologies. Analysts are expected to recognize when observed activity resembles an established pattern and document that recognition in their disposition rationale.</div>
+    </div>
+    <div class="gloss-card" onclick="toggleCard(this)">
+      <div class="gloss-term">Source of Funds / Wealth</div>
+      <div class="gloss-abbr">SOF / SOW</div>
+      <div class="gloss-expand-hint">Click to expand</div>
+      <div class="gloss-def">Source of funds refers to the origin of specific transaction proceeds. Source of wealth refers to how a customer accumulated their overall assets. Both are central to EDD reviews and high-risk customer assessments — the analyst must establish whether the economic rationale is plausible given the declared profile.</div>
+    </div>
+    <div class="gloss-card" onclick="toggleCard(this)">
+      <div class="gloss-term">Structuring</div>
+      <div class="gloss-abbr">Also known as Smurfing</div>
+      <div class="gloss-expand-hint">Click to expand</div>
+      <div class="gloss-def">The deliberate act of breaking large cash amounts into smaller transactions to avoid mandatory reporting thresholds. Structuring is a stand-alone criminal offense in most jurisdictions, independent of whether the underlying funds are illicit. The pattern of intent — not the individual transaction — is the key indicator.</div>
+    </div>
+    <div class="gloss-card" onclick="toggleCard(this)">
+      <div class="gloss-term">Placement, Layering, Integration</div>
+      <div class="gloss-abbr">The Three Stages of Money Laundering</div>
+      <div class="gloss-expand-hint">Click to expand</div>
+      <div class="gloss-def">Placement: introducing illicit cash into the financial system. Layering: separating proceeds from their source through complex or cross-border transactions. Integration: re-introducing laundered funds into the legitimate economy in a form that appears clean. Transaction monitoring primarily addresses layering and placement indicators.</div>
+    </div>
+    <div class="gloss-card" onclick="toggleCard(this)">
+      <div class="gloss-term">False Positive</div>
+      <div class="gloss-abbr">System-Generated Alert with Legitimate Explanation</div>
+      <div class="gloss-expand-hint">Click to expand</div>
+      <div class="gloss-def">An alert that, upon analyst review, has a plausible and documented legitimate explanation. The majority of alerts in most institutions are false positives. Documenting the closure rationale clearly and specifically is essential — an undocumented closure on a genuine red flag is a regulatory exposure.</div>
+    </div>
+    <div class="gloss-card" onclick="toggleCard(this)">
+      <div class="gloss-term">Beneficial Ownership</div>
+      <div class="gloss-abbr">UBO — Ultimate Beneficial Owner</div>
+      <div class="gloss-expand-hint">Click to expand</div>
+      <div class="gloss-def">The natural person(s) who ultimately own or control a legal entity, or on whose behalf a transaction is conducted. Identifying beneficial ownership is a core CDD obligation, particularly for corporate, trust, and nominee structures where legal and beneficial ownership diverge.</div>
+    </div>
+  </div>
+
+  <hr class="div">
+
+  <!-- TYPOLOGIES -->
+  <div class="ref-section-head">Alert Typologies</div>
+  <div class="ref-section-sub">The ten patterns used in this simulator — with investigative context for each.</div>
+
+  <div class="typol-grid">
+    <div class="typol-card" onclick="toggleCard(this)">
+      <div class="typol-name">Structuring</div>
+      <div class="typol-risk">Typically High Risk — Reportable in most jurisdictions</div>
+      <div class="card-expand-hint">Click to expand</div>
+      <div class="typol-desc">Repeated transactions deliberately kept below a reporting threshold across consecutive dates or accounts. The intent to circumvent reporting is the offense — proximity to the threshold across multiple dates is the key signal. Question: is the pattern too regular to be coincidental?</div>
+      <div class="typol-flags"><strong>Key indicators:</strong> Near-threshold amounts on consecutive days, cash-dominant activity, no apparent business rationale for the specific denominations.</div>
+    </div>
+    <div class="typol-card" onclick="toggleCard(this)">
+      <div class="typol-name">High-Risk Jurisdiction Transfer</div>
+      <div class="typol-risk">Medium–High Risk — Context and velocity dependent</div>
+      <div class="card-expand-hint">Click to expand</div>
+      <div class="typol-desc">Wires to or from jurisdictions flagged by FATF, the institution's risk appetite, or domestic regulators. Risk escalates with frequency, value, and when the destination is inconsistent with the customer's declared business or personal profile. Jurisdiction alone is not determinative — the combination of factors matters.</div>
+      <div class="typol-flags"><strong>Key indicators:</strong> Destination inconsistent with business type, no documented commercial relationship, multiple wires to FATF grey or black list jurisdictions.</div>
+    </div>
+    <div class="typol-card" onclick="toggleCard(this)">
+      <div class="typol-name">Money Mule Pattern</div>
+      <div class="typol-risk">High Risk — Often reportable</div>
+      <div class="card-expand-hint">Click to expand</div>
+      <div class="typol-desc">Funds enter and exit the account rapidly with minimal retention. The account functions as a conduit rather than a genuine operating account. Frequently associated with fraud networks, trafficking, and organized crime. The account holder may or may not be aware of the role their account is playing.</div>
+      <div class="typol-flags"><strong>Key indicators:</strong> Near-immediate outgoing transfers after incoming, multiple unrelated senders, negligible average balance, pattern inconsistent with declared occupation.</div>
+    </div>
+    <div class="typol-card" onclick="toggleCard(this)">
+      <div class="typol-name">Dormant Account Reactivation</div>
+      <div class="typol-risk">Medium Risk — Proportional to dormancy length and activity magnitude</div>
+      <div class="card-expand-hint">Click to expand</div>
+      <div class="typol-desc">A sudden resumption of high-value activity after a prolonged period of inactivity. The dormancy creates a gap in the behavioral baseline. Reactivation accompanied by cross-border transfers or large values is a recognized red flag in most AML typology libraries. The investigation should establish whether there is a documented trigger.</div>
+      <div class="typol-flags"><strong>Key indicators:</strong> Dormancy period vs. activity magnitude, no documented trigger for reactivation, new counterparties with no established relationship.</div>
+    </div>
+    <div class="typol-card" onclick="toggleCard(this)">
+      <div class="typol-name">Crypto Layering</div>
+      <div class="typol-risk">High Risk — Emerging and evolving typology</div>
+      <div class="card-expand-hint">Click to expand</div>
+      <div class="typol-desc">The use of virtual asset service providers (VASPs) and crypto exchanges to move funds rapidly between crypto and fiat, often across multiple jurisdictions. The speed and pseudonymous nature of crypto facilitate the layering stage of the laundering cycle. FATF's updated guidance on VASPs has expanded reporting obligations in this area.</div>
+      <div class="typol-flags"><strong>Key indicators:</strong> Rapid crypto-to-fiat conversion, no documented investment rationale, offshore transfer destinations, multiple exchange accounts.</div>
+    </div>
+    <div class="typol-card" onclick="toggleCard(this)">
+      <div class="typol-name">Unusual Business Activity</div>
+      <div class="typol-risk">Medium Risk — Profile and industry dependent</div>
+      <div class="card-expand-hint">Click to expand</div>
+      <div class="typol-desc">Transaction volumes, values, or counterparty types that deviate significantly from what would be expected given the business's declared size, industry, or stated purpose. The investigation should determine whether activity can be explained by legitimate business growth, a one-time event, or whether the profile itself requires updating.</div>
+      <div class="typol-flags"><strong>Key indicators:</strong> Revenue inconsistent with business type, new counterparties in unrelated sectors, cross-border volumes disproportionate to declared business.</div>
+    </div>
+    <div class="typol-card" onclick="toggleCard(this)">
+      <div class="typol-name">Round Number Wires</div>
+      <div class="typol-risk">Lower Risk — Requires corroborating pattern evidence</div>
+      <div class="card-expand-hint">Click to expand</div>
+      <div class="typol-desc">Repeated wire transfers in clean, round denominations. Legitimate commercial transactions rarely produce perfectly uniform amounts consistently. Individually this carries limited weight, but when combined with other indicators — offshore destinations, no invoice documentation, regular frequency — it suggests scripted transaction behavior.</div>
+      <div class="typol-flags"><strong>Key indicators:</strong> Identical amounts across multiple dates, no invoice or commercial agreement on file, regularity inconsistent with natural business activity.</div>
+    </div>
+    <div class="typol-card" onclick="toggleCard(this)">
+      <div class="typol-name">Third-Party Funnel</div>
+      <div class="typol-risk">High Risk — Often reportable</div>
+      <div class="card-expand-hint">Click to expand</div>
+      <div class="typol-desc">An account receiving funds from multiple unrelated third parties and forwarding them to other unrelated recipients — a classic funnel account structure. Frequently associated with fraud proceeds, underground banking, and informal value transfer networks. The account holder's relationship to the sending parties is the critical investigative question.</div>
+      <div class="typol-flags"><strong>Key indicators:</strong> Multiple unrelated incoming parties, immediate onward transfers, no apparent account holder relationship to senders or recipients.</div>
+    </div>
+    <div class="typol-card" onclick="toggleCard(this)">
+      <div class="typol-name">Sanctions Name Similarity</div>
+      <div class="typol-risk">High Risk — Must be formally resolved before any action</div>
+      <div class="card-expand-hint">Click to expand</div>
+      <div class="typol-desc">A name-screening system alert where the customer's name matches or closely resembles an entry on a sanctions or watchlist. The analyst must make a documented false positive or true hit determination. A true hit requires immediate escalation and potential account action. An undocumented closure on a potential true hit is a serious regulatory exposure.</div>
+      <div class="typol-flags"><strong>Key indicators:</strong> Review DOB, nationality, address, and any secondary identifiers. All resolution decisions must be documented with evidence, not assumed.</div>
+    </div>
+    <div class="typol-card" onclick="toggleCard(this)">
+      <div class="typol-name">Transaction Spike</div>
+      <div class="typol-risk">Medium–High Risk — Baseline and magnitude dependent</div>
+      <div class="card-expand-hint">Click to expand</div>
+      <div class="typol-desc">A sudden, significant deviation from the customer's established transaction baseline. The monitoring system flagged because the behavioral change cannot be explained by the existing profile data. The analyst must determine whether the spike has a legitimate cause — a property sale, business contract, inheritance — or whether it represents unexplained enrichment.</div>
+      <div class="typol-flags"><strong>Key indicators:</strong> Magnitude of deviation, whether income profile supports the activity, whether the account has established counterparty relationships that explain the movement.</div>
+    </div>
+  </div>
+
+  <hr class="div">
+
+  <!-- FRAMEWORKS -->
+  <div class="ref-section-head">Regulatory Frameworks</div>
+  <div class="ref-section-sub">Primary bodies and frameworks governing AML compliance obligations in North America and globally.</div>
+
+  <div class="fw-grid">
+    <div class="fw-card" onclick="toggleCard(this)">
+      <div class="fw-name">FATF</div>
+      <div class="fw-full">Financial Action Task Force</div>
+      <div class="card-expand-hint">Click to expand</div>
+      <div class="fw-desc">The global standard-setter for AML and counter-terrorist financing. The FATF 40 Recommendations establish the baseline obligations that member countries are expected to implement through domestic legislation. Jurisdictions that fail evaluations may be placed on the grey list (enhanced monitoring) or black list (call for countermeasures). These classifications directly affect transaction risk ratings in institutional AML models — a wire to a grey-listed jurisdiction carries elevated inherent risk regardless of amount.</div>
+    </div>
+    <div class="fw-card" onclick="toggleCard(this)">
+      <div class="fw-name">FINTRAC</div>
+      <div class="fw-full">Financial Transactions and Reports Analysis Centre of Canada</div>
+      <div class="card-expand-hint">Click to expand</div>
+      <div class="fw-desc">Canada's financial intelligence unit and primary AML supervisor for reporting entities. Administers the Proceeds of Crime (Money Laundering) and Terrorist Financing Act (PCMLTFA). Reporting entities in Canada must file Suspicious Transaction Reports (STRs) and Large Cash Transaction Reports (LCTRs) for cash transactions of $10,000 CAD or more. FINTRAC's compliance expectations place significant weight on the quality and specificity of STR narrative documentation, not only the filing decision.</div>
+    </div>
+    <div class="fw-card" onclick="toggleCard(this)">
+      <div class="fw-name">FinCEN</div>
+      <div class="fw-full">Financial Crimes Enforcement Network — U.S. Treasury</div>
+      <div class="card-expand-hint">Click to expand</div>
+      <div class="fw-desc">The US Treasury bureau responsible for AML policy and oversight under the Bank Secrecy Act (BSA). Requires filing of Suspicious Activity Reports (SARs) and Currency Transaction Reports (CTRs) above $10,000 USD. FinCEN issues typology guidance, administers beneficial ownership regulations, and has expanded virtual asset reporting obligations significantly since 2021. The Corporate Transparency Act (2024) has further extended beneficial ownership identification requirements across entity types.</div>
+    </div>
+  </div>
+
+</section>
+
+<!-- =============================================
+     ABOUT TAB
+     ============================================= -->
+<section class="tab-panel" id="tab-about">
+
+  <div class="about-layout">
+
+    <div class="about-main">
+      <div class="about-title">AML Compliance Lab</div>
+      <div class="about-version">v2.0 — Browser-Based Training Simulator</div>
+
+      <p class="about-p">
+        AML Compliance Lab is an interactive transaction monitoring simulator designed for individuals building knowledge in financial crime compliance. It replicates the core analytical decisions an AML analyst encounters daily: reviewing system-generated alerts, assessing customer risk profiles, documenting investigation rationale, and determining whether observed activity warrants closure, escalation for enhanced due diligence, or a suspicious transaction report filing.
+      </p>
+
+      <p class="about-p">
+        Cases are generated dynamically via a randomized scenario engine covering ten distinct alert typologies, realistic customer profiles including PEP classifications and name-screening flags, and variable jurisdictional risk across fifteen countries. No two sessions produce the same case queue. Performance is tracked per alert type, enabling targeted skill development over time.
+      </p>
+
+      <p class="about-p">
+        The Reference Library provides contextual grounding for each pattern encountered — covering core terminology, typology-specific investigative guidance, and the primary regulatory frameworks (FATF, FINTRAC, FinCEN) that govern suspicious activity reporting obligations.
+      </p>
+
+      <div class="skills-label">What this simulator develops — click any item to expand</div>
+
+      <div class="skill-item" onclick="toggleCard(this)">
+        <div class="skill-dot"></div>
+        <div>
+          <div class="skill-name">Transaction Monitoring &amp; Alert Review</div>
+          <div class="skill-desc">Interpreting system-generated alerts, evaluating risk scores, and applying analytical judgment to distinguish genuine suspicion from false positives across ten distinct alert typologies.</div>
+        </div>
+      </div>
+      <div class="skill-item" onclick="toggleCard(this)">
+        <div class="skill-dot"></div>
+        <div>
+          <div class="skill-name">Investigative Note-Writing</div>
+          <div class="skill-desc">Structuring clear, defensible disposition rationale using established AML terminology — a core competency in any live compliance environment where documentation quality is scrutinized alongside the decision itself.</div>
+        </div>
+      </div>
+      <div class="skill-item" onclick="toggleCard(this)">
+        <div class="skill-dot"></div>
+        <div>
+          <div class="skill-name">STR Narrative Drafting</div>
+          <div class="skill-desc">Constructing suspicious transaction report narratives that accurately reflect the typology, the customer risk factors identified, and the specific activity observed — adapting to each case rather than relying on boilerplate language.</div>
+        </div>
+      </div>
+      <div class="skill-item" onclick="toggleCard(this)">
+        <div class="skill-dot"></div>
+        <div>
+          <div class="skill-name">Typology Recognition</div>
+          <div class="skill-desc">Pattern identification across structuring, mule accounts, crypto layering, dormant account reactivation, sanctions screening, third-party funneling, and five additional recognized ML/TF typologies.</div>
+        </div>
+      </div>
+      <div class="skill-item" onclick="toggleCard(this)">
+        <div class="skill-dot"></div>
+        <div>
+          <div class="skill-name">Risk-Based Judgment</div>
+          <div class="skill-desc">Applying PEP status, jurisdictional exposure, account tenure, counterparty relationships, and income profile together to form a complete risk picture before committing to a disposition.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-sidebar">
+      <div class="aside-card">
+        <div class="aside-title">Technical Build</div>
+        <div class="tech-item">Vanilla HTML / CSS / JavaScript</div>
+        <div class="tech-item">Zero external dependencies</div>
+        <div class="tech-item">localStorage persistence</div>
+        <div class="tech-item">Randomized case generation engine</div>
+        <div class="tech-item">Keyword & logic-based scoring</div>
+        <div class="tech-item">Per-typology mastery tracking</div>
+        <div class="tech-item">Exportable STR draft (plain text)</div>
+      </div>
+      <div class="aside-card">
+        <div class="aside-title">Alert Types Covered</div>
+        <div id="alertTypeList"></div>
+      </div>
+      <div class="aside-card">
+        <div class="disclaimer">
+          This application is a training tool only. All cases, customer names, and transaction details are randomly generated and entirely fictional. Nothing in this simulator constitutes real regulatory guidance, legal advice, or official compliance instruction. No real financial data is processed or stored. All STR drafts generated are mock training documents and must not be treated as or submitted as real regulatory filings.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+</main>
+
+<footer class="app-footer">
+  AML Compliance Lab — Training Use Only — Not a Regulatory Filing Tool
+</footer>
+
+<script>
+"use strict";
+
+// ================================================
+// CONSTANTS
+// ================================================
+const FIRST_NAMES   = ["John","Maria","Kevin","Anna","Victor","Daniel","Lisa","Mohamed","Sarah","Omar","Priya","Lucas","Sofia","Ali","Noah","Aisha","James","Fatima","Robert","Chen","Diane","Marcus"];
+const LAST_NAMES    = ["Smith","Lopez","Patel","Roberts","Chen","Wong","Grant","Rahman","Ahmed","Khan","Brown","Wilson","Taylor","Singh","Martin","Ali","Jackson","Nguyen","Lee","Kowalski","Okafor","Reyes"];
+const BIZ_NAMES     = ["North Shore Imports","Maple Ridge Logistics","Global Export Ltd","Blue Harbor Trading","Northern Star Consultants","Summit Retail Group","Everwell Foods","Cedar Gate Holdings","Pacific Rim Solutions","Atlantic Bridge Corp","Meridian Trade GmbH","Crestwood Distribution"];
+const OCCUPATIONS   = ["Restaurant Owner","Retail Worker","Student","Freelancer","Small Business Owner","Crypto Trader","Teacher","Consultant","Import/Export Business","Logistics Company","Contractor","E-commerce Seller","Real Estate Agent","Accountant","Driver","IT Technician"];
+const COUNTRIES     = ["Canada","USA","UAE","United Kingdom","Singapore","Panama","Cyprus","Turkey","Hong Kong","Mexico","Netherlands","Germany","Australia","Brazil","India"];
+const HIGH_RISK_C   = ["UAE","Panama","Cyprus","Turkey","Hong Kong","Mexico"];
+const ALERT_TYPES   = ["Structuring","High-Risk Jurisdiction Transfer","Money Mule Pattern","Dormant Account Reactivation","Crypto Layering","Unusual Business Activity","Round Number Wires","Third Party Funnel","Sanctions Name Similarity","Transaction Spike"];
+
+const STORAGE_KEY   = "aml_lab_stats_v3";
+const MASTERY_KEY   = "aml_lab_mastery_v2";
+
+// ================================================
+// STATE
+// ================================================
+let queue          = [];
+let currentCase    = null;
+let currentIdx     = null;
+let currentDraft   = "";
+let analystStats   = { reviewed: 0, correct: 0, incorrect: 0 };
+let masteryData    = {};
+
+// ================================================
+// UTILITIES
+// ================================================
+const pick   = arr => arr[Math.floor(Math.random() * arr.length)];
+const rInt   = (lo, hi) => Math.floor(Math.random() * (hi - lo + 1)) + lo;
+const rAmt   = (lo, hi, r = 100) => Math.round(rInt(lo, hi) / r) * r;
+const money  = n => "$" + n.toLocaleString();
+
+// ================================================
+// THEME TOGGLE
+// ================================================
+function toggleTheme() {
+  const body  = document.body;
+  const icon  = document.getElementById("themeIcon");
+  const label = document.getElementById("themeLabel");
+  const isLight = body.classList.toggle("light-mode");
+  icon.textContent  = isLight ? "☾" : "☀";
+  label.textContent = isLight ? "Dark" : "Light";
+  localStorage.setItem("aml_lab_theme", isLight ? "light" : "dark");
+}
+
+// Restore saved theme on load
+(function() {
+  if (localStorage.getItem("aml_lab_theme") === "light") {
+    document.body.classList.add("light-mode");
+    const icon  = document.getElementById("themeIcon");
+    const label = document.getElementById("themeLabel");
+    if (icon)  icon.textContent  = "☾";
+    if (label) label.textContent = "Dark";
+  }
+})();
+
+// ================================================
+// EXPANDABLE CARDS
+// ================================================
+function toggleCard(el) {
+  el.classList.toggle("expanded");
+}
+function showTab(name) {
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("tab-" + name).classList.add("active");
+  document.querySelectorAll(".nav-btn").forEach(b => {
+    if (b.getAttribute("onclick") === `showTab('${name}')`) b.classList.add("active");
+  });
+}
+
+// ================================================
+// CASE GENERATION
+// ================================================
+function pickCustomer() {
+  return Math.random() < 0.25
+    ? { name: pick(BIZ_NAMES), entityType: "Business" }
+    : { name: pick(FIRST_NAMES) + " " + pick(LAST_NAMES), entityType: "Individual" };
+}
+
+function hintText(type) {
+  const map = {
+    "Structuring":
+      "Determine whether the deposit pattern — repeated amounts proximate to the reporting threshold across consecutive dates — could have a legitimate explanation consistent with the customer's declared occupation and income. Consider whether cash activity of this frequency and amount is plausible given the profile on file.",
+    "High-Risk Jurisdiction Transfer":
+      "Assess whether the customer's declared profile supports cross-border transfer activity of this value and frequency. Focus on the destinations: are they consistent with stated business relationships? Consider the combination of jurisdiction risk, transfer velocity, and whether source of funds can be established.",
+    "Money Mule Pattern":
+      "Determine whether funds are being retained in the account or passing through with minimal balance. Near-immediate outgoing transfers following incoming flows, combined with multiple unrelated counterparties, are the primary red flags. Ask: does the account holder have a plausible relationship with the parties sending and receiving funds?",
+    "Dormant Account Reactivation":
+      "Compare the length of dormancy with the nature and value of the reactivating transactions. Consider whether there is a documented reason for the gap in activity — a life event, travel, illness — and whether the new transactions are consistent with an updated profile or represent an unexplained behavioral shift.",
+    "Crypto Layering":
+      "Question whether there is a clear economic rationale for the rapid movement from a crypto exchange into outgoing fiat transfers. Assess the destinations, the speed of movement, and whether the customer's stated profile supports active crypto trading or investment activity at this scale.",
+    "Unusual Business Activity":
+      "Evaluate the transaction volumes against the business type, declared size, and historical activity. Consider whether counterparty jurisdictions are consistent with the business's stated operations, and whether the historical baseline can provide any context for the current deviation.",
+    "Round Number Wires":
+      "Consider whether the uniformity of amounts could reflect a legitimate fixed commercial arrangement — a lease, retainer, or standing order — or whether the pattern is too regular and too consistent to represent organic commercial activity. Look for supporting documentation or the absence of a plausible explanation.",
+    "Third Party Funnel":
+      "Assess whether the account holder has an identifiable and documented relationship with the parties sending funds in. Near-immediate onward transfers to unrelated recipients with minimal balance retention is the primary indicator. Consider whether the account is functioning as an informal remittance channel or fraud conduit.",
+    "Sanctions Name Similarity":
+      "This alert must not be closed without a fully documented false positive or true hit determination. Review all available secondary identifiers — date of birth, nationality, address, account history, counterparty relationships — against the sanctioned entity's profile. Insufficient documentation on a potential true hit is a serious compliance exposure.",
+    "Transaction Spike":
+      "Quantify the deviation from the customer's established baseline. Determine whether the spike is explicable by a known life event, business transaction, or income change. The larger and more sudden the deviation from baseline, the stronger the grounds for escalation and source of funds inquiry.",
+  };
+  return map[type] || "Consider the pattern, the customer profile, and whether the observed activity has a plausible economic rationale consistent with the declared occupation and income.";
+}
+
+function buildTransactions(type) {
+  let tx = [], indicator = "", score = 0;
+  let keywords = [], expected = "escalate", reasoning = [], scenarioLabel = "";
+
+  if (type === "Structuring") {
+    tx = [
+      ["Day 1", money(rAmt(9300,9900,100)), "Cash Deposit", "Canada"],
+      ["Day 2", money(rAmt(9300,9900,100)), "Cash Deposit", "Canada"],
+      ["Day 3", money(rAmt(9300,9900,100)), "Cash Deposit", "Canada"],
+    ];
+    indicator = "Multiple cash deposits recorded across consecutive days, each falling immediately below the $10,000 mandatory reporting threshold.";
+    score = 88; keywords = ["structuring","cash","threshold","multiple","below","deposit","consecutive","deliberate"];
+    reasoning = ["deposit pattern proximate to reporting threshold","possible deliberate threshold avoidance","repeated cash activity across consecutive days"];
+    scenarioLabel = "threshold avoidance pattern";
+  }
+  if (type === "High-Risk Jurisdiction Transfer") {
+    tx = [
+      ["Day 1", money(rAmt(18000,48000,100)), "Outgoing Wire", pick(HIGH_RISK_C)],
+      ["Day 2", money(rAmt(19000,52000,100)), "Outgoing Wire", pick(HIGH_RISK_C)],
+      ["Day 4", money(rAmt(15000,30000,100)), "Incoming Wire",  pick(HIGH_RISK_C)],
+    ];
+    indicator = "Repeated cross-border wire transfers to and from jurisdictions carrying elevated AML and financial crime risk under current FATF guidance.";
+    score = 84; keywords = ["jurisdiction","wire","cross-border","high-risk","transfer","fatf","country"];
+    reasoning = ["jurisdiction risk — transfers to FATF-flagged countries","cross-border transfer velocity inconsistent with profile","activity profile mismatch"];
+    scenarioLabel = "high-risk jurisdiction exposure";
+  }
+  if (type === "Money Mule Pattern") {
+    const inAmt = rAmt(5000,9500,100), outAmt = inAmt - rAmt(100,400,100);
+    tx = [
+      ["Day 1", money(inAmt),            "Incoming Transfer", "Canada"],
+      ["Day 1", money(outAmt),           "Outgoing Transfer", pick(COUNTRIES)],
+      ["Day 2", money(rAmt(4000,9000,100)), "Incoming Transfer", "Canada"],
+    ];
+    indicator = "Funds arriving in the account are transferred out almost immediately with minimal retention, consistent with pass-through or funnel account behavior.";
+    score = 82; keywords = ["mule","pass-through","incoming","outgoing","rapid","funnel","retention","conduit"];
+    reasoning = ["rapid movement of funds through account","negligible balance retention","possible mule or funnel account behavior"];
+    scenarioLabel = "pass-through account activity";
+  }
+  if (type === "Dormant Account Reactivation") {
+    tx = [
+      ["Prior 180+ days",  money(0),                    "No activity", "—"],
+      ["Day 1",            money(rAmt(12000,28000,100)), "Incoming Wire", pick(COUNTRIES)],
+      ["Day 2",            money(rAmt(11000,25000,100)), "Outgoing Wire", pick(COUNTRIES)],
+    ];
+    indicator = "Account dormant for over six months has been reactivated with high-value inbound and outbound transfers inconsistent with prior account behavior.";
+    score = 79; keywords = ["dormant","inactive","reactivation","sudden","large","baseline","dormancy","six months"];
+    reasoning = ["dormant-to-active behavioral shift","sudden high-value movement after extended inactivity","no documented trigger for reactivation"];
+    scenarioLabel = "dormant account reactivation with high-value activity";
+  }
+  if (type === "Crypto Layering") {
+    tx = [
+      ["Day 1", money(rAmt(18000,42000,100)), "Crypto Exchange Deposit", "Canada"],
+      ["Day 2", money(rAmt(17500,41000,100)), "Outgoing Wire",           pick(HIGH_RISK_C)],
+      ["Day 3", money(rAmt(16000,38000,100)), "E-Transfer",              "Canada"],
+    ];
+    indicator = "Rapid movement from a cryptocurrency exchange into multiple outgoing fiat transfers with no documented economic purpose or commercial rationale.";
+    score = 86; keywords = ["crypto","layering","exchange","rapid","fiat","virtual","asset","conversion"];
+    reasoning = ["source of funds unclear — crypto origin requiring verification","rapid in-and-out crypto-to-fiat movement","no apparent economic rationale for conversion pattern"];
+    scenarioLabel = "crypto-to-fiat layering";
+  }
+  if (type === "Unusual Business Activity") {
+    tx = [
+      ["Day 1", money(rAmt(70000,150000,500)), "Outgoing Wire", pick(COUNTRIES)],
+      ["Day 2", money(rAmt(65000,145000,500)), "Outgoing Wire", pick(COUNTRIES)],
+      ["Day 3", money(rAmt(50000,125000,500)), "Incoming Wire", pick(COUNTRIES)],
+    ];
+    indicator = "Business account showing large cross-border transaction volumes that deviate materially from the client's documented historical activity and declared business profile.";
+    score = 77; keywords = ["business","historical","cross-border","unusual","profile","deviation","volume","declared"];
+    reasoning = ["transaction volume inconsistent with declared business type","cross-border activity materially above historical baseline","enhanced review of business purpose required"];
+    scenarioLabel = "business profile deviation";
+  }
+  if (type === "Round Number Wires") {
+    const a = rAmt(20000,50000,1000);
+    tx = [
+      ["Day 1", money(a), "Outgoing Wire", pick(COUNTRIES)],
+      ["Day 3", money(a), "Outgoing Wire", pick(COUNTRIES)],
+      ["Day 5", money(a), "Outgoing Wire", pick(COUNTRIES)],
+    ];
+    indicator = "Three consecutive outgoing wire transfers in identical round-number amounts — a pattern inconsistent with typical organic commercial activity.";
+    score = 71; keywords = ["round","wire","repeated","identical","pattern","scripted","amount","uniform"];
+    reasoning = ["identical round amounts across multiple dates","pattern inconsistent with natural commercial activity","no invoicing or supporting documentation on file"];
+    scenarioLabel = "repeated uniform wire amounts";
+  }
+  if (type === "Third Party Funnel") {
+    tx = [
+      ["Day 1", money(rAmt(6000,12000,100)), "Incoming Transfer", "Canada"],
+      ["Day 1", money(rAmt(5900,11500,100)), "Outgoing Transfer", pick(COUNTRIES)],
+      ["Day 2", money(rAmt(6200,11800,100)), "Incoming Transfer", "Canada"],
+    ];
+    indicator = "Multiple incoming transfers from unrelated third parties with near-immediate onward transfers to separate, unrelated recipients — consistent with a funnel account pattern.";
+    score = 80; keywords = ["third","party","funnel","recipient","immediate","onward","unrelated","conduit"];
+    reasoning = ["third-party inflows with no established relationship","immediate onward transfers to unrelated parties","funnel account behavior pattern"];
+    scenarioLabel = "third-party funneling";
+  }
+  if (type === "Sanctions Name Similarity") {
+    tx = [
+      ["Day 1", money(rAmt(12000,28000,100)), "International Wire", pick(COUNTRIES)],
+    ];
+    indicator = "Name-screening system has flagged similarity between the customer's name and an entry on a sanctions or watchlist. Requires formal resolution before further transaction processing.";
+    score = 83; keywords = ["sanctions","name","screening","similarity","match","watchlist","resolution","true hit"];
+    reasoning = ["name-screening alert requiring formal false positive or true hit determination","secondary identifiers must be reviewed against sanctioned entity profile","alert cannot be closed without documented resolution"];
+    scenarioLabel = "unresolved name-screening alert";
+  }
+  if (type === "Transaction Spike") {
+    tx = [
+      ["Prior month avg.",    money(rAmt(300,1200,100)),   "Typical monthly volume", "Canada"],
+      ["Day 1",               money(rAmt(10000,22000,100)), "Incoming Transfer",       "Canada"],
+      ["Day 2",               money(rAmt(9500,21000,100)),  "Outgoing Transfer",        pick(COUNTRIES)],
+    ];
+    indicator = "Current transaction activity is materially inconsistent with the customer's declared profile and established account baseline, representing an unexplained behavioral deviation.";
+    score = 76; keywords = ["spike","inconsistent","profile","sudden","baseline","deviation","unexpected","behavioral"];
+    reasoning = ["significant and unexplained deviation from established baseline","activity cannot be supported by declared income or profile","source of funds inquiry required"];
+    scenarioLabel = "unexplained baseline deviation";
+  }
+
+  return { transactions: tx, indicator, score, keywords, expected, reasoning, scenarioLabel };
+}
+
+function generateCase() {
+  const cust       = pickCustomer();
+  const alertType  = pick(ALERT_TYPES);
+  const profile    = pick(OCCUPATIONS);
+  const residence  = pick(COUNTRIES);
+  const pep        = Math.random() < 0.08 ? "Yes" : "No";
+  const sanctions  = alertType === "Sanctions Name Similarity" ? "Possible Match — Requires Resolution" : "No Match";
+  const income     = rAmt(2500, 18000, 100);
+  const acctAge    = rInt(3, 84);
+  const txData     = buildTransactions(alertType);
+
+  let score = txData.score;
+  if (pep === "Yes")                     score += 7;
+  if (cust.entityType === "Business")    score += 3;
+  if (HIGH_RISK_C.includes(residence))   score += 4;
+  if (score > 99) score = 99;
+
+  const level     = score >= 80 ? "High" : score >= 65 ? "Medium" : "Low";
+  const riskClass = level.toLowerCase();
+
+  return {
+    id: "ALT-" + rInt(100000, 999999),
+    alertType, customer: cust.name, entityType: cust.entityType,
+    profile, residence, pep, sanctionsHit: sanctions,
+    monthlyIncome: income, accountAgeMonths: acctAge,
+    transactions: txData.transactions, indicator: txData.indicator,
+    riskScore: score, riskLevel: level, riskClass,
+    expected: txData.expected, keywords: txData.keywords,
+    hint: hintText(alertType), reasoning: txData.reasoning,
+    scenarioLabel: txData.scenarioLabel, submitted: false,
+  };
+}
+
+// ================================================
+// QUEUE
+// ================================================
+function refreshQueue(switchTab = true) {
+  queue = [];
+  for (let i = 0; i < 10; i++) queue.push(generateCase());
+  renderQueue();
+  document.getElementById("casePanel").style.display = "none";
+  currentCase = null; currentIdx = null; currentDraft = "";
+  if (switchTab) showTab("investigations");
+}
+
+function renderQueue() {
+  const tbl = document.getElementById("alertTable");
+  tbl.innerHTML = `<tr>
+    <th>Alert ID</th><th>Alert Type</th><th>Subject</th>
+    <th>Risk Score</th><th>Risk Level</th><th></th>
+  </tr>`;
+  queue.forEach((c, i) => {
+    const row = tbl.insertRow();
+    row.insertCell(0).innerHTML = `<span style="font-family:var(--ff-mono);font-size:12px;color:var(--text-muted)">${c.id}</span>`;
+    row.insertCell(1).textContent = c.alertType;
+    row.insertCell(2).textContent = c.customer;
+    row.insertCell(3).innerHTML   = `<span style="font-family:var(--ff-mono);font-size:13px">${c.riskScore}</span>`;
+    row.insertCell(4).innerHTML   = `<span class="badge risk-${c.riskClass}">${c.riskLevel}</span>`;
+    const cell = row.insertCell(5);
+    if (c.submitted) {
+      cell.innerHTML = `<span style="font-family:var(--ff-mono);font-size:10px;color:var(--text-dim);letter-spacing:.5px">REVIEWED</span>`;
+    } else {
+      const btn = document.createElement("button");
+      btn.textContent = "Review";
+      btn.className   = "btn btn-secondary btn-sm";
+      btn.onclick     = () => loadCase(i);
+      cell.appendChild(btn);
+    }
+  });
+}
+
+// ================================================
+// LOAD CASE
+// ================================================
+function loadCase(i) {
+  currentCase = queue[i];
+  currentIdx  = i;
+
+  document.getElementById("casePanel").style.display      = "block";
+  document.getElementById("feedback").innerHTML            = "";
+  document.getElementById("strDraftWrap").innerHTML        = "";
+  document.getElementById("exportBtn").style.display       = "none";
+  document.getElementById("notes").value                   = "";
+  document.getElementById("decision").value                = "";
+  document.getElementById("submitBtn").disabled            = !!currentCase.submitted;
+  document.getElementById("caseIdLine").textContent        = `Alert ID: ${currentCase.id} — ${currentCase.alertType}`;
+  document.getElementById("riskBadgeWrap").innerHTML       = `<span class="badge risk-${currentCase.riskClass}" style="font-size:12px;padding:5px 12px">${currentCase.riskLevel} Risk — Score ${currentCase.riskScore}/100</span>`;
+
+  const pepDisplay = currentCase.pep === "Yes"
+    ? `<span style="color:var(--high);font-weight:600">Yes — EDD Required</span>`
+    : `<span style="color:var(--text-muted)">No</span>`;
+
+  const sanctDisplay = currentCase.sanctionsHit !== "No Match"
+    ? `<span style="color:var(--high);font-weight:600">${currentCase.sanctionsHit}</span>`
+    : `<span style="color:var(--text-muted)">No Match</span>`;
+
+  let txRows = "";
+  currentCase.transactions.forEach(t => {
+    txRows += `<tr>
+      <td style="color:var(--text-muted)">${t[0]}</td>
+      <td class="tx-amount">${t[1]}</td>
+      <td>${t[2]}</td>
+      <td>${t[3]}</td>
+    </tr>`;
+  });
+
+  document.getElementById("caseData").innerHTML = `
+    <div class="two-col">
+      <div>
+        <div class="field-label" style="margin-bottom:10px">Customer Profile</div>
+        <table class="info-table">
+          <tr><td>Name</td>              <td>${currentCase.customer}</td></tr>
+          <tr><td>Entity Type</td>       <td>${currentCase.entityType}</td></tr>
+          <tr><td>Occupation / Business</td><td>${currentCase.profile}</td></tr>
+          <tr><td>Country of Residence</td><td>${currentCase.residence}</td></tr>
+          <tr><td>PEP Status</td>        <td>${pepDisplay}</td></tr>
+          <tr><td>Name Screening</td>    <td>${sanctDisplay}</td></tr>
+          <tr><td>Est. Monthly Income</td><td style="font-family:var(--ff-mono)">${money(currentCase.monthlyIncome)}</td></tr>
+          <tr><td>Account Age</td>       <td>${currentCase.accountAgeMonths} months</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:10px">Alert Details</div>
+        <div class="alert-banner">
+          <div class="alert-type-label">${currentCase.alertType}</div>
+          <div class="alert-indicator">${currentCase.indicator}</div>
+        </div>
+        <div class="review-q">
+          <div class="review-q-label">Investigation Considerations</div>
+          <ol>
+            <li>Does the transaction pattern fit the customer's declared occupation and income level?</li>
+            <li>Is there a plausible economic rationale for the observed fund movements?</li>
+            <li>Do counterparty jurisdictions or third-party relationships introduce additional risk factors?</li>
+            <li>Does this alert warrant closure with documented rationale, escalation for EDD, or STR consideration?</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+    <div class="sdiv" style="margin-top:20px">
+      <span class="sdiv-label">Transaction History</span>
+      <span class="sdiv-line"></span>
+    </div>
+    <table class="tx-table">
+      <tr><th>Date / Period</th><th>Amount</th><th>Transaction Type</th><th>Jurisdiction</th></tr>
+      ${txRows}
+    </table>`;
+
+  document.getElementById("casePanel").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// ================================================
+// HINT
+// ================================================
+function showHint() {
+  if (!currentCase) return;
+  document.getElementById("feedback").innerHTML = `
+    <div class="fb-box warning">
+      <div class="fb-title">Investigative Prompt</div>
+      <div class="fb-text">${currentCase.hint}</div>
+    </div>`;
+}
+
+// ================================================
+// NOTE ANALYSIS
+// ================================================
+function normalize(t) { return t.toLowerCase().replace(/\s+/g, " ").trim(); }
+
+function analyzeNotes(notes, c) {
+  const t = normalize(notes);
+  const checks = {
+    longEnough:          t.length >= 55,
+    mentionsPattern:     /(pattern|unusual|inconsistent|spike|rapid|repeated|sudden|threshold|deviation|structur)/.test(t),
+    mentionsProfile:     /(profile|customer|income|expected|behavior|business|occupation|declared|baseline)/.test(t),
+    mentionsDecision:    /(escalate|edd|enhanced due diligence|review|str|suspicious|close|monitoring|report|filing)/.test(t),
+    mentionsRiskLang:    /(risk|source of funds|source of wealth|jurisdiction|screening|sanctions|beneficial|third.party|false.positive|counterparty|pep)/.test(t),
+  };
+  let hits = [];
+  c.keywords.forEach(k => { if (t.includes(k.toLowerCase())) hits.push(k); });
+  let strength = Object.values(checks).filter(Boolean).length;
+  if (hits.length >= 1) strength++;
+  if (hits.length >= 2) strength++;
+  return { checks, hits, strength, strong: strength >= 5, adequate: strength >= 4 };
+}
+
+// ================================================
+// STR DRAFT — CASE-SPECIFIC NARRATIVE
+// ================================================
+function buildStrDraft(c, decision, notes) {
+  const txLines = c.transactions
+    .map(t => `  ${String(t[0]).padEnd(22)} ${String(t[1]).padEnd(14)} ${String(t[2]).padEnd(28)} ${t[3]}`)
+    .join("\n");
+
+  const pepNote    = c.pep === "Yes"    ? "\n* Subject is a Politically Exposed Person (PEP). Enhanced due diligence obligations apply." : "";
+  const sanctNote  = c.sanctionsHit !== "No Match" ? "\n* Name-screening has returned a potential match. False positive / true hit determination is required." : "";
+
+  const disposText = {
+    report:   "On the basis of the identified indicators, a Suspicious Transaction Report is recommended. The observed activity has no apparent legitimate explanation consistent with the customer's declared profile.",
+    escalate: "This case is escalated for Enhanced Due Diligence. Further review of source of funds, counterparty relationships, and transaction purpose is required before a final disposition can be recorded.",
+    close:    "Alert reviewed and closed. The activity, in context, has a reasonable explanation consistent with the customer's declared profile and income. No further action is recommended at this time.",
+  }[decision] || "Disposition recorded.";
+
+  const sep = "=".repeat(60);
+  const dash = "—".repeat(60);
+
+  return `MOCK SUSPICIOUS TRANSACTION REPORT — TRAINING DRAFT
+${sep}
+Generated : ${new Date().toLocaleDateString("en-CA")}
+Status    : Training Exercise Only — Not a Regulatory Filing
+${sep}
+
+SUBJECT INFORMATION
+${"—".repeat(40)}
+Alert ID          : ${c.id}
+Customer          : ${c.customer}
+Entity Type       : ${c.entityType}
+Occupation        : ${c.profile}
+Country of Res.   : ${c.residence}
+PEP Status        : ${c.pep}
+Name Screening    : ${c.sanctionsHit}
+Risk Score        : ${c.riskScore}/100 (${c.riskLevel} Risk)
+Account Age       : ${c.accountAgeMonths} months
+Est. Monthly Inc. : ${money(c.monthlyIncome)}
+${pepNote}${sanctNote}
+
+ALERT DETAILS
+${"—".repeat(40)}
+Alert Type        : ${c.alertType}
+Pattern Identified: ${c.scenarioLabel}
+
+Alert Indicator:
+${c.indicator}
+
+TRANSACTION HISTORY
+${dash}
+  Period                 Amount         Type                         Jurisdiction
+${txLines}
+${dash}
+
+INVESTIGATION NARRATIVE
+The subject — ${c.customer} (${c.entityType}, declared occupation: ${c.profile}) — has been identified in connection with activity consistent with a ${c.scenarioLabel} pattern. ${c.indicator}
+
+This activity is assessed as inconsistent with the customer's declared occupation and estimated monthly income of ${money(c.monthlyIncome)}. The ${c.scenarioLabel} pattern represents a recognized AML typology.${c.pep === "Yes" ? " The subject's PEP classification further elevates the inherent risk profile and the threshold of acceptable explanation." : ""} The transaction history, viewed in context with the customer's profile and the absence of documented legitimate purpose, supports the following disposition.
+
+ANALYST DISPOSITION
+${"—".repeat(40)}
+Decision : ${decision === "report" ? "File Suspicious Transaction Report" : decision === "escalate" ? "Escalate for Enhanced Due Diligence" : "Close — No Suspicious Activity Identified"}
+
+${disposText}
+
+ANALYST NOTES
+${"—".repeat(40)}
+${notes || "[No additional investigator notes recorded.]"}
+
+${sep}
+DISCLAIMER: This is a training simulation document only. It does not constitute a real
+regulatory filing and must not be treated or submitted as one. All case details are
+randomly generated and entirely fictional. No real financial data is represented.
+${sep}`;
+}
+
+function renderStrDraft(d) {
+  document.getElementById("strDraftWrap").innerHTML = `
+    <div class="sdiv" style="margin-top:20px">
+      <span class="sdiv-label">Mock STR Draft</span>
+      <span class="sdiv-line"></span>
+    </div>
+    <div class="str-wrap">
+      <textarea readonly>${d}</textarea>
+    </div>
+    <div style="font-family:var(--ff-mono);font-size:10px;color:var(--text-dim);margin-top:6px">
+      Training exercise only — not a regulatory filing.
+    </div>`;
+  document.getElementById("exportBtn").style.display = "inline-flex";
+}
+
+// ================================================
+// SUBMIT CASE
+// ================================================
+function submitCase() {
+  if (!currentCase) return;
+
+  if (currentCase.submitted) {
+    document.getElementById("feedback").innerHTML = `
+      <div class="fb-box warning">
+        <div class="fb-title">Already Submitted</div>
+        <div class="fb-text">This case has already been scored. Select another alert from the queue or generate a new queue to continue.</div>
+      </div>`;
+    return;
+  }
+
+  const decision = document.getElementById("decision").value;
+  const notes    = document.getElementById("notes").value.trim();
+
+  if (!decision) {
+    document.getElementById("feedback").innerHTML = `
+      <div class="fb-box incorrect">
+        <div class="fb-title">Disposition Required</div>
+        <div class="fb-text">Select a disposition before submitting — close, escalate for enhanced due diligence, or file a suspicious transaction report.</div>
+      </div>`;
+    return;
+  }
+
+  const a             = analyzeNotes(notes, currentCase);
+  const correctCall   = (decision === currentCase.expected || decision === "report");
+
+  currentCase.submitted = true;
+  document.getElementById("submitBtn").disabled = true;
+  analystStats.reviewed++;
+
+  if (!masteryData[currentCase.alertType]) masteryData[currentCase.alertType] = { correct: 0, total: 0 };
+  masteryData[currentCase.alertType].total++;
+
+  let decisionComment = "", explanationComment = "", nextStep = "";
+  let good = [], missed = [];
+  let boxClass = "incorrect", boxTitle = "Requires improvement";
+
+  // Decision assessment
+  if (correctCall) {
+    decisionComment = `Your disposition was directionally appropriate. The ${currentCase.scenarioLabel} pattern in this case requires escalation or STR consideration — not closure — and your decision reflects that judgment.`;
+  } else {
+    decisionComment = `The disposition selected is not appropriate for this fact pattern. A ${currentCase.scenarioLabel} pattern contains unresolved indicators that cannot support a straightforward closure without documented legitimate explanation.`;
+  }
+
+  // Note quality assessment
+  if (a.checks.longEnough)
+    good.push("Your notes provided sufficient detail rather than a one-line summary.");
+  else
+    missed.push("Your notes were too brief. A defensible disposition requires you to document what occurred, why it is anomalous, and what action follows from that assessment.");
+
+  if (a.checks.mentionsPattern)
+    good.push("You identified and described the transaction pattern clearly.");
+  else
+    missed.push("The transaction pattern was not clearly articulated. Specify what the behavior was — rapid movement, threshold proximity, repeated identical amounts, dormancy reactivation, or profile deviation.");
+
+  if (a.checks.mentionsProfile)
+    good.push("You linked the observed activity to the customer's profile and expected behavior.");
+  else
+    missed.push("Your notes should explicitly compare observed activity against the customer's declared occupation, income level, and expected behavioral profile.");
+
+  if (a.checks.mentionsDecision)
+    good.push("You explained your disposition path using appropriate AML reasoning.");
+  else
+    missed.push("Your notes should state the action path clearly: escalation for EDD, STR filing consideration, enhanced monitoring, or a specific documented rationale for closure.");
+
+  if (a.checks.mentionsRiskLang)
+    good.push("You incorporated relevant risk terminology — jurisdiction, source of funds, screening, counterparty risk, or similar.");
+  else
+    missed.push("Strengthen your notes by referencing applicable risk factors: source of funds, jurisdictional exposure, PEP classification, name-screening status, or counterparty relationships.");
+
+  if (a.hits.length)
+    good.push(`Case-specific terminology identified in your notes: ${a.hits.join(", ")}.`);
+  else
+    missed.push(`Consider incorporating the core language for this typology. Relevant phrases include: ${currentCase.reasoning.join("; ")}.`);
+
+  // Final result
+  if (correctCall && a.strong) {
+    analystStats.correct++;
+    masteryData[currentCase.alertType].correct++;
+    boxClass = "correct"; boxTitle = "Correct disposition";
+    explanationComment = "Your analysis demonstrates the key elements of a quality alert review: pattern identification, profile comparison, risk factor assessment, and a well-supported disposition. A mock STR draft has been generated below.";
+    nextStep = "In a live environment, the escalation would proceed to a senior analyst or MLRO for review. Additional context gathering — source of funds documentation, counterparty verification, account freeze assessment — would typically precede formal STR submission.";
+    currentDraft = buildStrDraft(currentCase, decision, notes);
+    renderStrDraft(currentDraft);
+  } else if (correctCall && a.adequate) {
+    analystStats.correct++;
+    masteryData[currentCase.alertType].correct++;
+    boxClass = "correct"; boxTitle = "Correct decision — narrative requires strengthening";
+    explanationComment = "The disposition is correct. However, the supporting rationale is not yet at the standard expected in a live compliance environment. In practice, the investigation note is reviewed as carefully as the decision itself — a weak write-up on a correct call still represents a documentation gap.";
+    nextStep = "To strengthen your notes: name the specific pattern observed, explain why it is inconsistent with the customer's profile, and state the regulatory basis for your escalation or STR consideration.";
+    currentDraft = buildStrDraft(currentCase, decision, notes);
+    renderStrDraft(currentDraft);
+  } else {
+    analystStats.incorrect++;
+    boxClass = "incorrect"; boxTitle = "Insufficient analysis";
+    explanationComment = "The response does not yet reflect the reasoning expected from a transaction monitoring analyst. In AML compliance, a correct decision without a defensible rationale is still a documentation failure. An undocumented or unsupported closure on a genuine red flag is a regulatory exposure.";
+    nextStep = `For this case: ${currentCase.indicator} The ${currentCase.scenarioLabel} pattern requires escalation for enhanced review rather than closure without a documented and specific legitimate explanation.`;
+    currentDraft = "";
+    document.getElementById("strDraftWrap").innerHTML = "";
+    document.getElementById("exportBtn").style.display = "none";
+  }
+
+  document.getElementById("feedback").innerHTML = `
+    <div class="fb-box ${boxClass}">
+      <div class="fb-title">${boxTitle}</div>
+      <div class="fb-text">${decisionComment}<br><br>${explanationComment}</div>
+    </div>
+    <div class="fb-grid">
+      <div class="score-box">
+        <div class="score-title">What you did well</div>
+        ${good.length
+          ? `<ul>${good.map(g => `<li>${g}</li>`).join("")}</ul>`
+          : `<span style="font-size:12px;color:var(--text-dim)">No notable strengths identified in the write-up.</span>`}
+      </div>
+      <div class="score-box">
+        <div class="score-title">Areas to develop</div>
+        ${missed.length
+          ? `<ul>${missed.map(m => `<li>${m}</li>`).join("")}</ul>`
+          : `<span style="font-size:12px;color:var(--text-dim)">No significant gaps identified.</span>`}
+      </div>
+    </div>
+    <div class="fb-box info">
+      <div class="fb-title">Analyst Coaching</div>
+      <div class="fb-text">${nextStep}</div>
+    </div>`;
+
+  updateStats();
+  renderMastery();
+  saveStats();
+
+  if (currentIdx !== null) {
+    queue.splice(currentIdx, 1);
+    queue.push(generateCase());
+    renderQueue();
+    currentIdx = null;
+  }
+}
+
+// ================================================
+// EXPORT
+// ================================================
+function exportReport() {
+  if (!currentDraft) return;
+  const blob = new Blob([currentDraft], { type: "text/plain;charset=utf-8" });
+  const a    = document.createElement("a");
+  a.href     = URL.createObjectURL(blob);
+  a.download = "AML_Lab_STR_Draft.txt";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// ================================================
+// STATS & MASTERY
+// ================================================
+function updateStats() {
+  document.getElementById("casesReviewed").textContent  = analystStats.reviewed;
+  document.getElementById("correctCases").textContent   = analystStats.correct;
+  document.getElementById("incorrectCases").textContent = analystStats.incorrect;
+  const pct = analystStats.reviewed > 0
+    ? Math.round(analystStats.correct / analystStats.reviewed * 100) + "%"
+    : "—";
+  document.getElementById("accuracy").textContent = pct;
+}
+
+function renderMastery() {
+  const grid = document.getElementById("masteryGrid");
+  if (!grid) return;
+  const html = ALERT_TYPES.map(type => {
+    const d   = masteryData[type] || { correct: 0, total: 0 };
+    const pct = d.total > 0 ? Math.round(d.correct / d.total * 100) : 0;
+    const cls = d.total === 0 ? "" : pct >= 70 ? "good" : pct >= 40 ? "ok" : "needs-work";
+    const lbl = d.total === 0 ? "No attempts" : `${d.correct}/${d.total} correct`;
+    return `<div class="mastery-item">
+      <div class="mastery-header">
+        <span class="mastery-name">${type}</span>
+        <span class="mastery-count">${lbl}</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join("");
+  grid.innerHTML = html;
+}
+
+function populateAlertTypeList() {
+  const el = document.getElementById("alertTypeList");
+  if (!el) return;
+  el.innerHTML = ALERT_TYPES.map(t =>
+    `<div style="font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);padding:5px 8px;background:var(--surface-2);border-radius:4px;margin-bottom:4px">${t}</div>`
+  ).join("");
+}
+
+function saveStats() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(analystStats));
+  localStorage.setItem(MASTERY_KEY, JSON.stringify(masteryData));
+}
+
+function loadStats() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      analystStats = { reviewed: p.reviewed || 0, correct: p.correct || 0, incorrect: p.incorrect || 0 };
+    }
+    const rawM = localStorage.getItem(MASTERY_KEY);
+    if (rawM) masteryData = JSON.parse(rawM);
+  } catch {
+    analystStats = { reviewed: 0, correct: 0, incorrect: 0 };
+    masteryData  = {};
+  }
+}
+
+function resetStats() {
+  if (!confirm("Reset all performance data and mastery records? This cannot be undone.")) return;
+  analystStats = { reviewed: 0, correct: 0, incorrect: 0 };
+  masteryData  = {};
+  saveStats();
+  updateStats();
+  renderMastery();
+}
+
+// ================================================
+// INIT
+// ================================================
+loadStats();
+updateStats();
+renderMastery();
+populateAlertTypeList();
+refreshQueue(false); // generate queue without switching tabs
+
+</script>
+</body>
+</html>
