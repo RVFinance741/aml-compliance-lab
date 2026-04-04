@@ -3,97 +3,262 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AML Compliance Lab — Transaction Monitoring Simulator</title>
+<title>AML Compliance Lab — The Modern Ledger</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600;700&family=Outfit:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 
 /* =============================================
-   DESIGN SYSTEM
+   DESIGN SYSTEM — THE MODERN LEDGER
+   Obsidian & Emerald / High-end Fintech
    ============================================= */
 :root {
-  --bg:          #0b1118;
-  --surface:     #111c27;
-  --surface-2:   #182535;
-  --border:      #1e3247;
-  --border-l:    #26405c;
+  --bg:          #0F1115;
+  --surface:     #1A1D23;
+  --surface-2:   #21252D;
+  --border:      #2D323A;
+  --border-l:    #3A4149;
 
-  --text:        #dde6f0;
-  --text-muted:  #5d7a94;
-  --text-dim:    #3a5270;
+  --text:        #E8EDF2;
+  --text-muted:  #58657A;
+  --text-dim:    #333C4A;
 
-  --accent:      #1a7fcf;
-  --accent-h:    #2490e8;
-  --accent-glow: rgba(26, 127, 207, 0.15);
+  /* Forest Emerald — primary accent */
+  --accent:      #10B981;
+  --accent-h:    #34D399;
+  --accent-glow: rgba(16, 185, 129, 0.12);
 
-  --low:         #059669;
-  --low-bg:      rgba(5, 150, 105, 0.10);
-  --med:         #d97706;
-  --med-bg:      rgba(217, 119, 6, 0.10);
-  --high:        #dc2626;
-  --high-bg:     rgba(220, 38, 38, 0.10);
+  /* Correct = Forest Emerald */
+  --low:         #10B981;
+  --low-bg:      rgba(16, 185, 129, 0.09);
+  /* Warning = muted amber */
+  --med:         #D97706;
+  --med-bg:      rgba(217, 119, 6, 0.09);
+  /* High / Incorrect = controlled crimson */
+  --high:        #E53E3E;
+  --high-bg:     rgba(229, 62, 62, 0.10);
 
-  --ok-bg:       rgba(5, 150, 105, 0.07);
-  --ok-border:   rgba(5, 150, 105, 0.20);
-  --err-bg:      rgba(220, 38, 38, 0.07);
-  --err-border:  rgba(220, 38, 38, 0.20);
+  --ok-bg:       rgba(16, 185, 129, 0.07);
+  --ok-border:   rgba(16, 185, 129, 0.24);
+  --err-bg:      rgba(229, 62, 62, 0.08);
+  --err-border:  rgba(229, 62, 62, 0.26);
   --warn-bg:     rgba(217, 119, 6, 0.07);
-  --warn-border: rgba(217, 119, 6, 0.20);
-  --info-bg:     rgba(26, 127, 207, 0.07);
-  --info-border: rgba(26, 127, 207, 0.20);
+  --warn-border: rgba(217, 119, 6, 0.24);
+  --info-bg:     rgba(16, 185, 129, 0.06);
+  --info-border: rgba(16, 185, 129, 0.20);
 
   --ff-display: 'Cormorant', Georgia, serif;
   --ff-body:    'Outfit', system-ui, sans-serif;
-  --ff-mono:    'JetBrains Mono', Consolas, monospace;
+  --ff-mono:    'IBM Plex Mono', 'Courier New', monospace;
 
-  --r:  8px;
-  --rl: 12px;
+  --r:  6px;
+  --rl: 10px;
 }
 
 /* =============================================
-   LIGHT MODE
+   LIGHT MODE — Ivory & Emerald
+   Crisp, clean fintech daylight
    ============================================= */
 body.light-mode {
-  --bg:          #f0f4f8;
-  --surface:     #ffffff;
-  --surface-2:   #f4f7fa;
-  --border:      #d8e0e8;
-  --border-l:    #b8c8d8;
+  --bg:          #F7F8FA;
+  --surface:     #FFFFFF;
+  --surface-2:   #F0F2F5;
+  --border:      #DDE1E8;
+  --border-l:    #B8C0CC;
 
-  --text:        #1a2b3c;
-  --text-muted:  #4a6275;
-  --text-dim:    #8aa0b2;
+  --text:        #111318;
+  --text-muted:  #4A5568;
+  --text-dim:    #9AA5B4;
 
-  --accent:      #1a7fcf;
-  --accent-h:    #1570b8;
-  --accent-glow: rgba(26, 127, 207, 0.10);
+  /* Emerald stays consistent across modes */
+  --accent:      #059669;
+  --accent-h:    #10B981;
+  --accent-glow: rgba(5, 150, 105, 0.10);
 
   --low:         #059669;
-  --low-bg:      rgba(5, 150, 105, 0.10);
-  --med:         #b45309;
-  --med-bg:      rgba(180, 83, 9, 0.10);
-  --high:        #dc2626;
-  --high-bg:     rgba(220, 38, 38, 0.10);
+  --low-bg:      rgba(5, 150, 105, 0.09);
+  --med:         #B45309;
+  --med-bg:      rgba(180, 83, 9, 0.09);
+  --high:        #C53030;
+  --high-bg:     rgba(197, 48, 48, 0.09);
 
-  --ok-bg:       rgba(5, 150, 105, 0.08);
-  --ok-border:   rgba(5, 150, 105, 0.25);
-  --err-bg:      rgba(220, 38, 38, 0.08);
-  --err-border:  rgba(220, 38, 38, 0.25);
-  --warn-bg:     rgba(180, 83, 9, 0.08);
-  --warn-border: rgba(180, 83, 9, 0.25);
-  --info-bg:     rgba(26, 127, 207, 0.08);
-  --info-border: rgba(26, 127, 207, 0.25);
+  --ok-bg:       rgba(5, 150, 105, 0.07);
+  --ok-border:   rgba(5, 150, 105, 0.28);
+  --err-bg:      rgba(197, 48, 48, 0.07);
+  --err-border:  rgba(197, 48, 48, 0.28);
+  --warn-bg:     rgba(180, 83, 9, 0.07);
+  --warn-border: rgba(180, 83, 9, 0.26);
+  --info-bg:     rgba(5, 150, 105, 0.06);
+  --info-border: rgba(5, 150, 105, 0.22);
 }
 
-body.light-mode .brand-title   { color: #1a2b3c; }
-body.light-mode .stat-value    { color: #1a2b3c; }
-body.light-mode .ref-section-head { color: #1a2b3c; }
-body.light-mode .fw-name       { color: #1a2b3c; }
-body.light-mode .case-main-title{ color: #1a2b3c; }
-body.light-mode .about-title   { color: #1a2b3c; }
-body.light-mode select, body.light-mode textarea { background: #ffffff; color: #1a2b3c; }
-body.light-mode .str-wrap textarea { background: #f4f7fa; color: var(--text-muted); }
+/* Light mode text overrides */
+body.light-mode .brand-title    { color: #111318; }
+body.light-mode .stat-value     { color: #111318; }
+body.light-mode .ref-section-head { color: #111318; }
+body.light-mode .fw-name        { color: #111318; }
+body.light-mode .case-main-title { color: #111318; }
+body.light-mode .about-title    { color: #111318; }
+body.light-mode select,
+body.light-mode textarea        { background: #FFFFFF; color: #111318; border-color: #DDE1E8; }
+body.light-mode .str-wrap textarea {
+  background: #F0F2F5;
+  color: #059669;
+  border-color: #DDE1E8;
+}
+body.light-mode .btn-primary    { color: #FFFFFF; }
+body.light-mode .risk-high      { background: rgba(197,48,48,0.10); color: #C53030; border-color: rgba(197,48,48,0.25); }
+body.light-mode .risk-medium    { background: rgba(180,83,9,0.10);  color: #B45309; border-color: rgba(180,83,9,0.25);  }
+body.light-mode .risk-low       { background: rgba(5,150,105,0.10); color: #059669; border-color: rgba(5,150,105,0.25); }
+body.light-mode .typol-risk     { color: #059669; opacity: 0.85; }
+body.light-mode .fb-box.incorrect .fb-title { color: #C53030; }
+body.light-mode .fb-box.correct  .fb-title  { color: #059669; }
+body.light-mode .app-header::after { opacity: 0; }
+
+/* =============================================
+   MODERN LEDGER — FINTECH DETAIL LAYER
+   ============================================= */
+
+/* Header — clean obsidian bar with a hairline emerald underline */
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.app-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(16, 185, 129, 0.35) 30%,
+    rgba(16, 185, 129, 0.35) 70%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Active nav — emerald, no glow, precision over flash */
+.nav-btn.active {
+  color: var(--accent);
+  background: var(--accent-glow);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+/* Stat cards — clean 1px border, emerald on hover */
+.stat-card {
+  border: 1px solid var(--border);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.stat-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-glow);
+}
+
+/* Panels — exactly 1px #2D323A as specified */
+.panel {
+  border: 1px solid var(--border);
+}
+
+/* Feedback boxes */
+.fb-box.incorrect { background: var(--err-bg); border-color: var(--err-border); }
+.fb-box.incorrect .fb-title { color: #FC8181; letter-spacing: 1.2px; }
+.fb-box.correct   .fb-title { color: var(--accent); }
+
+/* Bar fills — emerald-first hierarchy */
+.bar-fill              { background: var(--accent); }
+.bar-fill.good         { background: #10B981; box-shadow: 0 0 6px rgba(16,185,129,0.30); }
+.bar-fill.ok           { background: #D97706; }
+.bar-fill.needs-work   { background: #E53E3E; }
+
+/* Primary button — emerald, dark text for contrast */
+.btn-primary {
+  background: var(--accent);
+  color: #0A0D10;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-h);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.22);
+}
+
+/* Expanded card — emerald border + inner glow */
+.gloss-card.expanded,
+.typol-card.expanded,
+.fw-card.expanded,
+.skill-item.expanded {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-glow), inset 0 0 24px rgba(16, 185, 129, 0.03);
+}
+
+/* Risk badges */
+.risk-high   { background: rgba(229,62,62,0.12); color: #FC8181; border: 1px solid rgba(229,62,62,0.28); }
+.risk-medium { background: rgba(217,119,6,0.12); color: #F6AD55; border: 1px solid rgba(217,119,6,0.28); }
+.risk-low    { background: rgba(16,185,129,0.10); color: #68D391; border: 1px solid rgba(16,185,129,0.26); }
+
+/* Typography — IBM Plex Mono applied to all data labels */
+.stat-label,
+.panel-label,
+.mastery-name,
+.mastery-count,
+.case-id-line,
+.field-label,
+.fb-title,
+.score-title,
+.aside-title,
+.sdiv-label,
+.alert-type-label,
+.review-q-label,
+.gloss-abbr,
+.typol-risk,
+.fw-full,
+.brand-sub,
+.skills-label,
+.tech-item,
+.app-footer,
+th { font-family: var(--ff-mono); }
+
+/* Monospace data values — precise & sharp */
+.stat-value    { color: #EDF2F7; font-family: var(--ff-display); }
+.brand-title   { color: #EDF2F7; letter-spacing: 0.4px; }
+.ref-section-head { color: #EDF2F7; }
+.fw-name       { color: #EDF2F7; }
+.case-main-title { color: #EDF2F7; }
+.about-title   { color: #EDF2F7; }
+
+/* Typology risk classification — emerald tint */
+.typol-risk { color: var(--accent); opacity: 0.80; font-family: var(--ff-mono); }
+
+/* STR draft — financial terminal aesthetic */
+.str-wrap textarea {
+  background: #0C0F13;
+  color: #10B981;
+  border-color: var(--border);
+  font-size: 11.5px;
+  font-family: var(--ff-mono);
+  letter-spacing: 0.3px;
+}
+
+/* Footer — ledger notation style */
+.app-footer {
+  font-family: var(--ff-mono);
+  letter-spacing: 1.2px;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border);
+}
+
+/* Alert banner — emerald tint instead of blue */
+.alert-banner {
+  background: var(--info-bg);
+  border-color: var(--info-border);
+}
+.alert-type-label { color: var(--accent); }
 
 /* Theme toggle button */
 .theme-toggle {
@@ -1309,7 +1474,7 @@ hr.div {
 
     <div class="about-main">
       <div class="about-title">AML Compliance Lab</div>
-      <div class="about-version">v2.0 — Browser-Based Training Simulator</div>
+      <div class="about-version">v3.1 — The Modern Ledger Edition</div>
 
       <p class="about-p">
         AML Compliance Lab is an interactive transaction monitoring simulator designed for individuals building knowledge in financial crime compliance. It replicates the core analytical decisions an AML analyst encounters daily: reviewing system-generated alerts, assessing customer risk profiles, documenting investigation rationale, and determining whether observed activity warrants closure, escalation for enhanced due diligence, or a suspicious transaction report filing.
